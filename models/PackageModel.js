@@ -10,7 +10,8 @@ var PackageSchema = new Schema(
     duration: { type: Number, required: true }, // In Months, the number of months the investment would last
     startDate: { type: Date, required: true }, // The date investment starts counting
     units: { type: Number, required: true }, // Number of Units the package offers
-    roi: { type: Number, required: true, max: 100 } // In percentage and should max at 100
+    roi: { type: Number, required: true, max: 100 }, // In percentage and should max at 100
+    unitsLeft: { type: Number } // Number of units left
   },
   { timestamps: true }
 );
