@@ -8,6 +8,6 @@ router.get("/u", InvestmentController.userInvestmentList);
 router.get("/:id", InvestmentController.investmentDetail);
 router.post("/", InvestmentController.invest);
 // router.put("/:id", InvestmentController.updateInvestment);
-// router.delete("/:id", InvestmentController.bookDelete);
+router.delete("/:id", InvestmentController.cancelInvestment);
 
 module.exports = router;

@@ -174,7 +174,11 @@ exports.invest = [
         }
       );
       const { status, txAmount } = transaction.data.data;
-      if(status !== "success" && txAmount/100 < amount && units < unitsLeft) {
+      if (
+        status !== "success" &&
+        txAmount / 100 < amount &&
+        units < unitsLeft
+      ) {
         return apiResponse.ErrorResponse(res, "Invalid Transaction");
       }
       const investment = new Investment({
@@ -187,16 +191,20 @@ exports.invest = [
         user: req.user
       });
 
-      investment.save(async (err) => {
+      investment.save(async err => {
         if (err) {
           return apiResponse.ErrorResponse(res, err);
         }
         const newUnits = unitsLeft - units;
-        await Package.findOneAndUpdate({ _id: req.body.package }, { unitsLeft: newUnits }, (err) => {
-          if(err){
-            return apiResponse.ErrorResponse(res, "Something Went Wrong");
+        await Package.findOneAndUpdate(
+          { _id: req.body.package },
+          { unitsLeft: newUnits },
+          err => {
+            if (err) {
+              return apiResponse.ErrorResponse(res, "Something Went Wrong");
+            }
           }
-        });
+        );
         let investmentData = new InvestmentData(investment);
         return apiResponse.successResponseWithData(
           res,
@@ -210,8 +218,6 @@ exports.invest = [
     }
   }
 ];
-
-
 
 /**
  * Cancel Investments.
@@ -239,40 +245,104 @@ exports.cancelInvestment = [
           );
         }
         // Get Project Start Date
-        const iPackage = await Package.findOne({ _id: foundInvestment.package }).exec();
+        const iPackage = await Package.findOne({
+          _id: foundInvestment.package
+        }).exec();
         const { startDate, title, unitsLeft } = iPackage;
         // Check to ensure we aren't canceling an investment before the start date
         if (new Date().getTime() > new Date(startDate).getTime() + 86400000) {
-          return apiResponse.ErrorResponse(res, "Too Late to Cancel Investment");
+          return apiResponse.ErrorResponse(
+            res,
+            "Too Late to Cancel Investment"
+          );
         }
+        console.log(unitsLeft);
+        // TODO: Figure This Shit Out
+        await axios
+          .post(
+            "https://api.paystack.co/refund",
+            {
+              transaction: foundInvestment.txId,
+              customer_note: `Cancelled investment: ${title}`
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET}`
+              }
+            }
+          )
+          .then(resp => {
+            if (
+              resp.data.data.status !== "pending" ||
+              resp.data.data.status !== "success"
+            ) {
+              return apiResponse.ErrorResponse(
+                res,
+                "Investment Cancellation Failed"
+              );
+            }
+            const newUnits = unitsLeft + foundInvestment.units;
+            Package.findOneAndUpdate(
+              { _id: foundInvestment.package },
+              { unitsLeft: newUnits },
+              err => {
+                if (err) {
+                  return apiResponse.ErrorResponse(res, "Something Went Wrong");
+                }
+              }
+            );
 
-        const refundStatus = await axios.post("https://api.paystack.co/refund", {
-          transaction: foundInvestment.txId,
-          "customer_note": `Cancelled investment: ${title}`
-        }, {headers: {
-          "Authorization": `Bearer ${process.env.PAYSTACK_SECRET}`
-        }});
-
-        if (
-          refundStatus.data.data.status !== "pending" ||
-          refundStatus.data.data.status !== "success"
-        ) {
-          return apiResponse.ErrorResponse(res, "Investment Cancellation Failed");
-        }
-        const newUnits = unitsLeft + foundInvestment.units;
-        Package.findOneAndUpdate({ _id: foundInvestment.package}, {unitsLeft: newUnits}, (err) => {
-          if(err) {
-            return apiResponse.ErrorResponse(res, "Something Went Wrong");
-          }
-        });
-
-        // Delete Investment
-        Investment.findOneAndDelete({_id: req.params.id}, (err) => {
-          if(err){
-            apiResponse.ErrorResponse(res, "SOmething Went Wrong");
-          }
-        });
-        apiResponse.successResponse(res, "Investment Cancelled Succesfully");
+            // Delete Investment
+            Investment.findOneAndDelete({ _id: req.params.id }, err => {
+              if (err) {
+                apiResponse.ErrorResponse(res, "SOmething Went Wrong");
+              }
+            });
+            apiResponse.successResponse(
+              res,
+              "Investment Cancelled Succesfully"
+            );
+          })
+          .catch(err => {
+            console.log(err.response.data);
+            if (
+              err.response.data.message ===
+              "Transaction has been fully reversed"
+            ) {
+              const newUnits = unitsLeft + foundInvestment.units;
+              Package.findOneAndUpdate(
+                {
+                  _id: foundInvestment.package
+                },
+                {
+                  unitsLeft: newUnits
+                },
+                err => {
+                  if (err) {
+                    return apiResponse.ErrorResponse(
+                      res,
+                      "Something Went Wrong"
+                    );
+                  }
+                }
+              );
+              // Delete Investment
+              Investment.findOneAndDelete(
+                {
+                  _id: req.params.id
+                },
+                err => {
+                  if (err) {
+                    apiResponse.ErrorResponse(res, "SOmething Went Wrong");
+                  }
+                }
+              );
+              return apiResponse.ErrorResponse(
+                res,
+                "Transaction has been fully reversed"
+              );
+            }
+          });
       });
     } catch (err) {
       //throw error in json response with status 500.
