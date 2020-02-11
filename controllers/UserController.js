@@ -56,38 +56,23 @@ exports.bookList = [
 ];
 
 /**
- * Book Detail.
+ * User Detail as User.
  *
- * @param {string}      id
  *
  * @returns {Object}
  */
-exports.bookDetail = [
+exports.getUserDetail = [
   auth,
-  function(req, res) {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return apiResponse.successResponseWithData(res, "Operation success", {});
-    }
+  function(req, res) {    
     try {
-      Book.findOne(
-        { _id: req.params.id, user: req.user._id },
-        "title description isbn createdAt"
-      ).then(book => {
-        if (book !== null) {
-          let bookData = new BookData(book);
-          return apiResponse.successResponseWithData(
-            res,
-            "Operation success",
-            bookData
-          );
-        } else {
-          return apiResponse.successResponseWithData(
-            res,
-            "Operation success",
-            {}
-          );
-        }
-      });
+      UserDetails.findOne(
+        { user: req.user._id }, ((err, user) => {
+          if(err){
+            return apiResponse.ErrorResponse(res, err);
+          }
+          return apiResponse.successResponseWithData(res, "User Details Fetched", user);
+        })
+      );
     } catch (err) {
       //throw error in json response with status 500.
       return apiResponse.ErrorResponse(res, err);
