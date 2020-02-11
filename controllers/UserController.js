@@ -109,7 +109,7 @@ exports.newDetails = [
   body("bank", "Bank must not be empty.")
     .isLength({ min: 1 })
     .trim(),
-  body("accountNumber", "Account Number must not be 10 digits.")
+  body("accountNumber", "Account Number must be 10 digits.")
     .isLength({ min: 10, max: 10 })
     .trim(),
   body("accountName", "Account Name must not be empty")
@@ -159,93 +159,73 @@ exports.newDetails = [
 ];
 
 /**
- * Book update.
+ * Update User Details.
  *
- * @param {string}      title
- * @param {string}      description
- * @param {string}      isbn
+ * @param {string}      bank
+ * @param {string}      accountNumber
+ * @param {string}      accountName
  *
  * @returns {Object}
  */
-exports.bookUpdate = [
+exports.updateUserDetails = [
   auth,
-  body("title", "Title must not be empty.")
+  body("bank", "Bank must not be empty.")
     .isLength({ min: 1 })
     .trim(),
-  body("description", "Description must not be empty.")
+  body("accountNumber", "Account Number must be 10 digits.")
+    .isLength({ min: 10, max: 10 })
+    .trim(),
+  body("accountName", "Account Name must not be empty")
     .isLength({ min: 1 })
     .trim(),
-  body("isbn", "ISBN must not be empty")
-    .isLength({ min: 1 })
-    .trim()
-    .custom((value, { req }) => {
-      return Book.findOne({
-        isbn: value,
-        user: req.user._id,
-        _id: { $ne: req.params.id }
-      }).then(book => {
-        if (book) {
-          return Promise.reject("Book already exist with this ISBN no.");
-        }
-      });
-    }),
   sanitizeBody("*").escape(),
   (req, res) => {
     try {
       const errors = validationResult(req);
-      var book = new Book({
-        title: req.body.title,
-        description: req.body.description,
-        isbn: req.body.isbn,
-        _id: req.params.id
-      });
-
+      
       if (!errors.isEmpty()) {
         return apiResponse.validationErrorWithData(
           res,
           "Validation Error.",
           errors.array()
         );
-      } else {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-          return apiResponse.validationErrorWithData(
+      }
+      var userDetails = {
+        bank: req.body.bank,
+        accountNumber: req.body.accountNumber,
+        accountName: req.body.accountName,
+        user: req.user
+      };
+      
+      UserDetails.findOne({user: req.user}, (err, user) => {
+        if (user) {
+          UserDetails.updateOne({user: req.user}, userDetails, (err) => {
+            if(err){
+              return apiResponse.ErrorResponse(res, err);
+            }            
+          });
+          const userDetailsData = new UserDetailsData(userDetails);
+          return apiResponse.successResponseWithData(
             res,
-            "Invalid Error.",
-            "Invalid ID"
+            "User Details Updated",
+            userDetailsData
           );
         } else {
-          Book.findById(req.params.id, function(err, foundBook) {
-            if (foundBook === null) {
-              return apiResponse.notFoundResponse(
-                res,
-                "Book not exists with this id"
-              );
-            } else {
-              //Check authorized user
-              if (foundBook.user.toString() !== req.user._id) {
-                return apiResponse.unauthorizedResponse(
-                  res,
-                  "You are not authorized to do this operation."
-                );
-              } else {
-                //update book.
-                Book.findByIdAndUpdate(req.params.id, book, {}, function(err) {
-                  if (err) {
-                    return apiResponse.ErrorResponse(res, err);
-                  } else {
-                    let bookData = new BookData(book);
-                    return apiResponse.successResponseWithData(
-                      res,
-                      "Book update Success.",
-                      bookData
-                    );
-                  }
-                });
-              }
+          const userDetail = new UserDetails(userDetails);
+          // Save UserDetails
+          userDetail.save((err) => {
+            if(err){
+              apiResponse.ErrorResponse(res, err);
             }
           });
+          const userDetailsData = new UserDetailsData(userDetails);
+          return apiResponse.successResponseWithData(
+            res,
+            "User Details Created",
+            userDetailsData
+          );
         }
-      }
+      });
     } catch (err) {
       //throw error in json response with status 500.
       return apiResponse.ErrorResponse(res, err);
