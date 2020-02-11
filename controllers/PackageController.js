@@ -15,6 +15,7 @@ function PackageData(data) {
   this.startDate = data.startDate;
   this.units = data.units;
   this.roi = data.roi;
+  this.unitsLeft = data.unitsLeft;
 }
 
 /**
@@ -130,7 +131,8 @@ exports.createPackage = [
         duration: req.body.duration,
         startDate: req.body.startDate,
         units: req.body.units,
-        roi: req.body.roi
+        roi: req.body.roi,
+        unitsLeft: req.body.units
       });
 
       // TODO: Admin Validation

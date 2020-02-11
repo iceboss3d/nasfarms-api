@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 
 var PackageSchema = new Schema(
   {
-    title: { type: String, required: true, unique: true }, // The title of the package
+    title: { type: String, required: true }, // The title of the package
     description: { type: String, required: true }, // The Package description
     cost: { type: Number, required: true }, // The cost of each unit
     duration: { type: Number, required: true }, // In Months, the number of months the investment would last
