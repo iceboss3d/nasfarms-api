@@ -259,47 +259,45 @@ exports.updateUserDetails = [
 ];
 
 /**
- * Book Delete.
+ * Admin Disable User.
  *
  * @param {string}      id
  *
  * @returns {Object}
  */
-exports.bookDelete = [
+exports.disableUser = [
   auth,
   function(req, res) {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return apiResponse.validationErrorWithData(
-        res,
-        "Invalid Error.",
-        "Invalid ID"
-      );
-    }
     try {
-      Book.findById(req.params.id, function(err, foundBook) {
-        if (foundBook === null) {
-          return apiResponse.notFoundResponse(
-            res,
-            "Book not exists with this id"
-          );
-        } else {
-          //Check authorized user
-          if (foundBook.user.toString() !== req.user._id) {
-            return apiResponse.unauthorizedResponse(
-              res,
-              "You are not authorized to do this operation."
-            );
-          } else {
-            //delete book.
-            Book.findByIdAndRemove(req.params.id, function(err) {
-              if (err) {
-                return apiResponse.ErrorResponse(res, err);
-              } else {
-                return apiResponse.successResponse(res, "Book delete Success.");
-              }
-            });
-          }
+      User.findOneAndUpdate({_id: req.params.id}, {status: false}, (err) => {
+        if(err){
+          return apiResponse.ErrorResponse(res, err);
         }
+        return apiResponse.successResponse(res, "User Disabled");
+      });
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  }
+];
+
+/**
+ * Admin Activate User.
+ *
+ * @param {string}      id
+ *
+ * @returns {Object}
+ */
+exports.activateUser = [
+  auth,
+  function(req, res) {
+    try {
+      User.findOneAndUpdate({_id: req.params.id}, {status: true}, (err) => {
+        if(err){
+          return apiResponse.ErrorResponse(res, err);
+        }
+        return apiResponse.successResponse(res, "User Activated");
       });
     } catch (err) {
       //throw error in json response with status 500.

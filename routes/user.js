@@ -9,6 +9,7 @@ router.get("/:id", UserController.getUserDetailAdmin);
 router.get("/u/", UserController.getUserDetail);
 router.post("/", UserController.newDetails);
 router.put("/", UserController.updateUserDetails);
-// router.delete("/:id", BookController.bookDelete);
+router.post("/activate/:id", UserController.activateUser);
+router.post("/disable/:id", UserController.disableUser);
 
 module.exports = router;
