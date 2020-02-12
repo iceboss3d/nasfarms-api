@@ -22,32 +22,46 @@ function UserDetailsData(data) {
 }
 
 /**
- * Book List.
+ * List Users.
  *
  * @returns {Object}
  */
-exports.bookList = [
+exports.userList = [
   auth,
   function(req, res) {
     try {
-      Book.find(
-        { user: req.user._id },
-        "title description isbn createdAt"
-      ).then(books => {
-        if (books.length > 0) {
-          return apiResponse.successResponseWithData(
-            res,
-            "Operation success",
-            books
-          );
-        } else {
-          return apiResponse.successResponseWithData(
-            res,
-            "Operation success",
-            {}
-          );
+      User.find({}, (err, users) => {
+        if(err){
+          return apiResponse.ErrorResponse(res, err);
         }
+        return apiResponse.successResponseWithData(res, "Successfully Fetched all Users", users);
       });
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  }
+];
+
+/**
+ * User Detail as Admin.
+ *
+ * @param {string} id
+ *
+ * @returns {Object}
+ */
+exports.getUserDetailAdmin = [
+  auth,
+  function(req, res) {    
+    try {
+      UserDetails.findOne(
+        { user: req.params.id }, ((err, user) => {
+          if(err){
+            return apiResponse.ErrorResponse(res, err);
+          }
+          return apiResponse.successResponseWithData(res, "User Details Fetched", user);
+        })
+      );
     } catch (err) {
       //throw error in json response with status 500.
       return apiResponse.ErrorResponse(res, err);

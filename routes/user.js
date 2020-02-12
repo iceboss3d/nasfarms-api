@@ -3,7 +3,8 @@ const UserController = require("../controllers/UserController");
 
 const router = express.Router();
 
-// router.get("/", BookController.bookList);
+router.get("/list", UserController.userList);
+router.get("/:id", UserController.getUserDetailAdmin);
 router.get("/u/", UserController.getUserDetail);
 router.post("/", UserController.newDetails);
 router.put("/", UserController.updateUserDetails);
