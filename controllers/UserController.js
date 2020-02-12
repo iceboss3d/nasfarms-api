@@ -7,12 +7,6 @@ const auth = require("../middlewares/jwt");
 var mongoose = require("mongoose");
 mongoose.set("useFindAndModify", false);
 
-// User Schema
-function UserData(data) {
-  this.firstName = data.firstName;
-  this.lastName = data.lastName;
-  this.phoneNumber = data.phoneNumber;
-}
 // UserDetail Schema
 function UserDetailsData(data) {
   this.bank = data.bank;
