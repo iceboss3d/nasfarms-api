@@ -43,6 +43,32 @@ exports.userList = [
   }
 ];
 
+
+/**
+ * Get a User.
+ *
+ * @returns {Object}
+ */
+exports.getUser = [
+  auth,
+  function(req, res) {
+    try {
+      User.findOne({_id: req.params.id}, (err, user) => {
+        if(err){
+          return apiResponse.ErrorResponse(res, err);
+        }
+        if(!user){
+          return apiResponse.notFoundResponse(res, "No User found with such ID");
+        }
+        return apiResponse.successResponseWithData(res, "Successfully Fetched User", user);
+      });
+    } catch (err) {
+      //throw error in json response with status 500.
+      return apiResponse.ErrorResponse(res, err);
+    }
+  }
+];
+
 /**
  * User Detail as Admin.
  *
