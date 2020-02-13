@@ -6,6 +6,8 @@ const apiResponse = require("../helpers/apiResponse");
 const auth = require("../middlewares/jwt");
 const axios = require("axios");
 var mongoose = require("mongoose");
+const mailer = require("../helpers/mailer");
+const { constants } = require("../helpers/constants");
 mongoose.set("useFindAndModify", false);
 
 // Book Schema
@@ -206,10 +208,24 @@ exports.invest = [
           }
         );
         let investmentData = new InvestmentData(investment);
+        const html = `<p>Hello ${
+          req.user.lastName
+        },<br/>You have succesfully purchased ${units} units of ${
+          packageDetails.title
+        }.</p><p>Package start date is: ${new Date(
+          startDate
+        ).toLocaleDateString("en-NG")}</p>`;
+        await mailer.send(
+          constants.notification.from,
+          req.user.email,
+          "Investment Notification",
+          html
+        );
         return apiResponse.successResponseWithData(
           res,
           "Investment Succesful.",
-          investmentData
+          investmentData,
+          html
         );
       });
     } catch (err) {
